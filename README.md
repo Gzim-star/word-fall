@@ -1,6 +1,6 @@
-# Word Fall: Illusion
+# Word Fall: 
 
-A psychological word puzzle game built around focus, illusion, memory, and deception.
+A psychological word puzzle game built around focus, memory, and deception.
 
 Created by Gëzim Hasani.
 
