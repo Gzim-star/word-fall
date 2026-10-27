@@ -131,15 +131,47 @@ canvas {
   pointer-events:none;
   transition:opacity 1.5s;
 } 
+
+
+/* ===== ROUND 5: THE VOID ===== */
+.game .hint,
+.game canvas,
+.game #mindMessage,
+.game #roundDisplay,
+.game .controls button {
+  transition: opacity 0.8s ease;
+}
+
+.game.void-hidden .hint,
+.game.void-hidden canvas,
+.game.void-hidden #mindMessage,
+.game.void-hidden #roundDisplay,
+.game.void-hidden .controls button:not(:last-child) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* RESET bleibt nach 6 Sekunden sichtbar */
+.game.void-hidden:not(.void-reset-visible) .controls button:last-child {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* RESET verschwindet während des zusätzlichen Tricks */
+.game.void-hidden.void-reset-blink-hidden .controls button:last-child {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 </style>
 </head>
 
 <body>
 <div id="introScreen">
   <div class="title">
-    <span>W</span><span>o</span><span>®</span><span>d</span>
+    <span>W</span><span>O</span><span>®</span><span>D</span>
     <span class="space"></span>
-    <span>f</span><span>@</span><span>l</span><span>l</span>
+    <span>F</span><span>@</span><span>L</span><span>L</span>
   </div>
   <div class="subtitle">GAME</div>
 </div>
@@ -244,26 +276,18 @@ function playNextRoundTone() {
   
 /* ===== DICTIONARY ===== */
 const WORDS = [
-  // Deine alten 10-Buchstaben-Wörter
-  'ABOMINABLE', 'REPOSITORY', 'CROSSBREED', 'DISASTROUS',
-  'EVERYTHING', 'FASCINATOR', 'REFRESHING', 'HEARTBEATS',
-  'IMMEDIATES', 'JOURNALISM', 'KNIGHTHOOD', 'LANDSCAPER',
-  'MASTERMIND', 'NIGHTSTAND', 'OPERATIONS', 'POPULATION',
-  'RENDEZVOUS', 'SCRATCHING', 'LEGENDARYS',
-  'UNDERTAKER', 'VOLUNTEERS', 'WATERMELON', 'XENOPHOBIC',
-  'YELLOWHAZE', 'ZOOLOGISTS',
-
-  // Neue 8-Buchstaben-Wörter
+// 10-Buchstaben-Wörter
+  'ABOMINABLE', 'REPOSITORY','EVERYTHING', 'REFRESHING', 'KNIGHTHOOD', 
+  'MASTERMIND', 'NIGHTSTAND','LEGENDARYS', 'WATERMELON', 'YELLOWHAZE', 
+// 8-Buchstaben-Wörter
   'DYNAMICS', 'ECLIPSES', 'FIREWALL', 'HORIZONS', 'JOURNEYS',
   'KEYSTONE', 'LANDMARK', 'MOUNTAIN', 'NOTEBOOK', 'OBELISKS',
-
-  // Neue 6-Buchstaben-Wörter
-  'PUZZLE', 'ORACLE', 'SYSTEM', 'PLAYER', 'TARGET', 'BINARY',
-  'MODULE', 'VECTOR', 'RANDOM', 'CODING',
-
-  // Neue 4-Buchstaben-Wörter
-  'WORD', 'GAME', 'PLAY', 'TEST', 'DATA', 'NODE', 'LINK',
-  'TASK', 'FLOW', 'CODE'
+// 6-Buchstaben-Wörter
+  'PUZZLE', 'ORACLE', 'SYSTEM', 'PLAYER', 'TARGET', 
+  'BINARY', 'MODULE', 'VECTOR', 'RANDOM', 'CODING',
+// 4-Buchstaben-Wörter
+  'WORD', 'GAME', 'PLAY', 'TEST', 'DATA', 
+  'NODE', 'LINK', 'TASK', 'FLOW', 'CODE'
 ];
 const MIN_LEN = 4;
 const COLORS = ['#ffffff'];
@@ -310,6 +334,87 @@ let framesInvisible = false;
 let hintDisabled = false; // Hint in Runde 4 deaktivieren
 let mindMessageShown = false;
 let round4InvisibleY = null;
+
+/* ===== ROUND 5: THE VOID ===== */
+const gameElement = document.querySelector('.game');
+
+let voidStartTimer = null;
+let voidResetTimer = null;
+let voidBlinkTimer = null;
+let voidBlinkRestoreTimer = null;
+let voidEndTimer = null;
+let voidTriggeredForRound5 = false;
+
+function clearVoidTimers() {
+  [
+    voidStartTimer,
+    voidResetTimer,
+    voidBlinkTimer,
+    voidBlinkRestoreTimer,
+    voidEndTimer
+  ].forEach(timer => {
+    if (timer !== null) clearTimeout(timer);
+  });
+
+  voidStartTimer = null;
+  voidResetTimer = null;
+  voidBlinkTimer = null;
+  voidBlinkRestoreTimer = null;
+  voidEndTimer = null;
+}
+
+function startRound5Void() {
+  if (round !== 5 || voidTriggeredForRound5) return;
+
+  voidTriggeredForRound5 = true;
+
+  // Rund 10 Sekunden nach Beginn von Runde 5
+  voidStartTimer = setTimeout(() => {
+    if (round !== 5 || !gameRunning) return;
+
+    // Nur die Sichtbarkeit verändern.
+    // Die Spiellogik und Animation laufen weiter.
+    gameElement.classList.add('void-hidden');
+
+    // RESET erscheint nach 6 Sekunden
+    voidResetTimer = setTimeout(() => {
+      gameElement.classList.add('void-reset-visible');
+    }, 6000);
+
+    // RESET verschwindet einmal zusätzlich für 3 Sekunden
+    voidBlinkTimer = setTimeout(() => {
+      gameElement.classList.add('void-reset-blink-hidden');
+
+      voidBlinkRestoreTimer = setTimeout(() => {
+        gameElement.classList.remove('void-reset-blink-hidden');
+      }, 3000);
+    }, 25000);
+
+    // Nach insgesamt 60 Sekunden alles wieder sichtbar machen
+    voidEndTimer = setTimeout(() => {
+      gameElement.classList.remove(
+        'void-hidden',
+        'void-reset-visible',
+        'void-reset-blink-hidden'
+      );
+    }, 60000);
+
+  }, 10000);
+}
+
+function resetRound5Void() {
+  clearVoidTimers();
+
+  gameElement.classList.remove(
+    'void-hidden',
+    'void-reset-visible',
+    'void-reset-blink-hidden'
+  );
+
+  voidTriggeredForRound5 = false;
+}
+
+  
 // 🎨 Farben für Original Rahmen (deine bestehenden Farben benutzen)
 const originalFrameColors = [
   '#ffffff',  // 1  Rot
@@ -734,12 +839,23 @@ else if(round === 8){
   // Runde erhöhen (max 9)
   round++;
    mindMessageShown = false;
-    if(round > maxRounds){
+   // Alte Void-Timer bei jedem Rundenwechsel entfernen
+
+resetRound5Void();
+    
+if(round > maxRounds){
   round = 1;
 }
  
   updateRoundDisplay();
-    // Runde 6 Spezialeffekt
+
+// Runde 5: THE VOID nach ca. 10 Sekunden planen
+
+if (round === 5) {
+  startRound5Void();
+}
+
+// Runde 6 Spezialeffekt
 if(round === 6){
   setTimeout(()=>{
     framesInvisible = true;
@@ -1077,7 +1193,42 @@ function startGame() {
   }
 }
 
-function restartGame(){ arena.forEach(r=>r.fill(null)); clearHighlights(); resetPlayer(); shuffleFrameColors(); colorIndex = 0; newTargetWord(); generateFakeFrames(); dropCounter=0; gameRunning=true; }
+
+function restartGame() {
+  resetRound5Void();
+
+  round = 1;
+  frameColor = originalFrameColors[0];
+  mindMessageShown = false;
+  framesInvisible = false;
+  hintDisabled = false;
+  hintRevealed = false;
+  pulseActive = false;
+  fakePulseActive = false;
+  fakePulseTriggered = false;
+  round4InvisibleY = null;
+
+  if (revealTimeout) clearTimeout(revealTimeout);
+  if (colorShiftTimeout) clearTimeout(colorShiftTimeout);
+  if (fakePulseTimeout) clearTimeout(fakePulseTimeout);
+
+  arena.forEach(r => r.fill(null));
+  clearHighlights();
+
+  shuffleFrameColors();
+  colorIndex = 0;
+
+  newTargetWord();
+  generateFakeFrames();
+  resetPlayer();
+
+  dropCounter = 0;
+  gameRunning = true;
+
+  frameColor = originalFrameColors[round - 1];
+  updateRoundDisplay();
+}
+
 function dropFast(){ if(!gameRunning) return; while(!collide(arena,player)){ player.pos.y++; } player.pos.y--; merge(arena,player); checkAndClearWords(); clearDiagonalSixByColor(); resetPlayer(); }
 
 /* ===== INIT ===== */
